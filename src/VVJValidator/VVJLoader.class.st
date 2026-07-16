@@ -16,9 +16,8 @@ e incomingInvocations size
 "
 Class {
 	#name : 'VVJLoader',
-	#superclass : 'Object',
+	#superclass : 'VVJHandlerClass',
 	#instVars : [
-		'jar',
 		'outputFilePath',
 		'paths'
 	],
@@ -29,7 +28,7 @@ Class {
 { #category : 'parsing' }
 VVJLoader >> import [
 
-	^ outputFilePath readStreamDo: [ :st | FamixJavaModel new importFromJSONStream: st ].
+	^ self ok: (outputFilePath readStreamDo: [ :st | FamixJavaModel new importFromJSONStream: st ])
 ]
 
 { #category : 'parsing' }
@@ -39,22 +38,12 @@ VVJLoader >> initialize [
 	outputFilePath := (FileSystem workingDirectory / ('output-', UUID new asString)) , 'json'
 ]
 
-{ #category : 'accessing' }
-VVJLoader >> jar [
-
-	^ jar
-]
-
-{ #category : 'accessing' }
-VVJLoader >> jar: anObject [
-
-	jar := anObject
-]
-
 { #category : 'parsing' }
 VVJLoader >> load [
 
-	self parse.
+	| result |
+	result := self parse.
+	result isError ifTrue: [ ^ result ].
 	^ self import
 ]
 
@@ -73,21 +62,27 @@ VVJLoader >> outputFilePath: anObject [
 { #category : 'parsing' }
 VVJLoader >> parse [
 
-	| err |
+	| arguments err |
 	self validate.
-
-	OSSUnixSubprocess new
-			command: '/usr/bin/java';
-			arguments: {
+	
+	arguments := {
 				'-jar'.
 				jar fullName.
 				'-format'.
 				'json'.
 				'-o'.
 				outputFilePath fullName.
-				'-jdkMode'.
-				'-1.7'.
-			}, paths;
+			}.
+	
+	"by default we choose 1.7 version, we could also make it a parameter"
+	jdkMode ifTrue: [ 
+		arguments := arguments , { '-jdkMode'. '-1.7'. } ].
+	
+	arguments := arguments , paths.
+
+	OSSUnixSubprocess new
+			command: '/usr/bin/java';
+			arguments: arguments;
 			redirectStdout;
 			redirectStderr;
 			runAndWaitPollingEvery: (Delay forMilliseconds: 50)
@@ -95,7 +90,8 @@ VVJLoader >> parse [
 				err := errString ].
 			
 	err ifNotEmpty: [ 
-		self error: 'Errors while parsing: ', err ].
+		^ self fail: 'Errors while parsing: ', err ].
+	^ self ok: nil
 ]
 
 { #category : 'accessing' }

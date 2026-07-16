@@ -8,6 +8,11 @@ Class {
 	#package : 'VVJValidator'
 }
 
+{ #category : 'testing' }
+VVJShufflerResult >> isError [
+	^ false
+]
+
 { #category : 'accessing' }
 VVJShufflerResult >> shuffler [
 

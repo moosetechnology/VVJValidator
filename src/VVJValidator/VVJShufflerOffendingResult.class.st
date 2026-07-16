@@ -9,13 +9,19 @@ Class {
 }
 
 { #category : 'accessing' }
-VVJShufflerOffendingResult >> offending [
+VVJShufflerOffendingResult >> fail: anObject [
 
-	^ offending
+	offending := anObject
+]
+
+{ #category : 'testing' }
+VVJShufflerOffendingResult >> isError [
+
+	^ true
 ]
 
 { #category : 'accessing' }
-VVJShufflerOffendingResult >> offending: anObject [
+VVJShufflerOffendingResult >> offending [
 
-	offending := anObject
+	^ offending
 ]
